@@ -4,7 +4,6 @@ Little utility to split MP3 files into small chunks
 
 usage:
 ```bash
-chmod +x splitmp3
 ./splitmp3 DURATION SOURCE_FOLDER
 ```
 
