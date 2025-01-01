@@ -14,7 +14,9 @@ partLen=$1
 filearg=$2
 
 # find all mp3 files
-sources=($(find "$filearg" -name *.mp3))
+sources=($(find "$filearg" -name "*.mp3"))
+
+# echo "sources: $sources"
 
 # for each file
 for file in "${sources[@]}"
@@ -24,12 +26,17 @@ do
     # cut to keep length only
     # awk to convert duration in minutes
     dur=$(ffmpeg -i "$file" 2>&1 | grep -Eo 'Duration: [0-9:]+' | cut -c 11- | awk -F: '{ print ($1 * 60) + $2}')
-    
-    # TODO: ignore file if smaller than 2x chunk length
 
     # get number of chunks
     partsCount=`echo "$dur/$partLen" | bc`
-    
+
+    # ignore file if smaller than 2x chunk length
+    if [ $partsCount -lt 2 ]
+    then
+        echo "$(basename "$file") is too short to split"
+        continue
+    fi
+
     # get file name and directory
     name=$(basename "$file" .mp3)
     dir=$(dirname "$file")
@@ -39,7 +46,7 @@ do
     do
         # ffmpeg start and end args
         start=`echo "($i-1)*$partLen*60" | bc`
-        end="-to "+`echo "$start+20*60" | bc`
+        end="-to "+`echo "$start+$partLen*60" | bc`
 
         # ignore end arg for last chunk
         if [ "$i" = "$partsCount" ]
@@ -48,8 +55,10 @@ do
         fi
 
         partPath="$dir/$name-$i.mp3"
-        echo ffmpeg -i "$file" -vn -acodec copy -ss $start $end "$partPath"
-        ffmpeg -i "$file" -vn -acodec copy -ss $start $end "$partPath"
+
+        cmd="ffmpeg -v 8 -i "$file" -vn -acodec copy -ss $start $end \"$partPath\""
+        echo "$cmd"
+        $(eval $cmd)
 
     done
 
