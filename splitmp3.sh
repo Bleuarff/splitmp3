@@ -8,7 +8,7 @@
 #####################################
 
 # chunk length in minutes
-partLen=$1
+chunkLen=$1
 
 # folder for source mp3 files
 filearg=$2
@@ -28,7 +28,7 @@ do
     dur=$(ffmpeg -i "$file" 2>&1 | grep -Eo 'Duration: [0-9:]+' | cut -c 11- | awk -F: '{ print ($1 * 60) + $2}')
 
     # get number of chunks
-    partsCount=`echo "$dur/$partLen" | bc`
+    partsCount=`echo "$dur/$chunkLen" | bc`
 
     # ignore file if smaller than 2x chunk length
     if [ $partsCount -lt 2 ]
@@ -40,13 +40,13 @@ do
     # get file name and directory
     name=$(basename "$file" .mp3)
     dir=$(dirname "$file")
- 
+
     # process file for each chunk
     for i in `seq 1 $partsCount`;
     do
         # ffmpeg start and end args
-        start=`echo "($i-1)*$partLen*60" | bc`
-        end="-to "+`echo "$start+$partLen*60" | bc`
+        start=`echo "($i-1)*$chunkLen*60" | bc`
+        end="-t "+`echo "$chunkLen*60" | bc`
 
         # ignore end arg for last chunk
         if [ "$i" = "$partsCount" ]
@@ -56,7 +56,7 @@ do
 
         partPath="$dir/$name-$i.mp3"
 
-        cmd="ffmpeg -v 8 -i "$file" -vn -acodec copy -ss $start $end \"$partPath\""
+        cmd="ffmpeg -v 8 -ss $start $end -i "$file" -vcodec copy -acodec copy  \"$partPath\""
         echo "$cmd"
         $(eval $cmd)
 
