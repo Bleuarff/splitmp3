@@ -2,12 +2,18 @@
 
 Little utility to split MP3 files into small chunks
 
-usage:
+## Usage
+
 ```bash
 ./splitmp3 DURATION SOURCE_FOLDER
 ```
 
-_DURATION_: the chunk length, in minutes  
+_DURATION_: chunk length, in minutes  
 _SOURCE_FOLDER_: folder where the script looks for files to slice.
 
-Outputs mp3 files in the same directory.
+Trailing track duration over chunk length is appended to the last chunk.  
+Outputs mp3 files in the same directory. 
+
+## Dependencies
+
+- ffmpeg
